@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import axios from "axios";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,28 +28,30 @@ export default function LoginPage() {
 
   // Handle login logic
   const onSubmit = async (data: LoginFormData) => {
-    // Simulate API delay
-    await new Promise((res) => setTimeout(res, 800));
-    // Get user from localStorage
-    const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-    if (!userStr) {
-      toast.error("Please sign up first");
-      return;
+    try {
+      // Query the JSON server for a user with matching email and password
+      const res = await axios.get(`http://localhost:3001/users`, {
+        params: { email: data.email, password: data.password },
+      });
+      const users = res.data;
+      if (users.length === 0) {
+        toast.error("Invalid email or password");
+        return;
+      }
+  // Set login flag in localStorage (must match Navbar key)
+  localStorage.setItem("isLoggedIn", "true");
+  // Optionally, store user info
+  localStorage.setItem("userEmail", data.email);
+      toast.success("Login successful!");
+      setTimeout(() => router.push("/"), 1200);
+    } catch (error) {
+      toast.error("Login failed!");
     }
-    const user = JSON.parse(userStr);
-    if (user.email !== data.email || user.password !== data.password) {
-      toast.error("User is not registered");
-      return;
-    }
-    toast.success("Login successful!");
-    // Set login flag in localStorage
-    localStorage.setItem("isLoggedIn", "true");
-    setTimeout(() => router.push("/"), 1200);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <Toaster position="top-center" />
+      {/* <Toaster position="top-center" /> */}
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"

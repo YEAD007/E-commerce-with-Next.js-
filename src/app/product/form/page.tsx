@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -87,14 +88,8 @@ export default function ProductFormPage() {
         category: data.category,
         imageUrl,
       };
-      // Save to localStorage
-      if (typeof window !== "undefined") {
-        const prev = localStorage.getItem("products");
-        const products = prev ? JSON.parse(prev) : [];
-        products.push(product);
-        localStorage.setItem("products", JSON.stringify(products));
-      }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Send POST request to JSON server
+      await axios.post("http://localhost:3001/products", product);
       toast.success("Product submitted successfully!", { id: loadingToast });
       reset();
       setPreview(null);

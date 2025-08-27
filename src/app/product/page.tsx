@@ -1,8 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 // Type for a product
 interface Product {
+  id: number;
   productName: string;
   description: string;
   price: string;
@@ -14,13 +17,29 @@ export default function ProductListPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
 
-  // Load products from localStorage
+  // Load products from JSON server
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("products");
-      if (stored) setProducts(JSON.parse(stored));
-    }
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get("http://localhost:3001/products");
+        setProducts(res.data);
+      } catch (error) {
+        toast.error("Failed to fetch products");
+      }
+    };
+    fetchProducts();
   }, []);
+
+  // Delete product
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:3001/products/${id}`);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Product deleted");
+    } catch (error) {
+      toast.error("Failed to delete product");
+    }
+  };
 
   // Filter products by name
   const filtered = products.filter((p) =>
@@ -48,18 +67,19 @@ export default function ProductListPage() {
               <th className="py-2 px-4 text-left">Description</th>
               <th className="py-2 px-4 text-left">Price</th>
               <th className="py-2 px-4 text-left">Category</th>
+              <th className="py-2 px-4 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-6 text-gray-500">
+                <td colSpan={6} className="text-center py-6 text-gray-500">
                   No products found.
                 </td>
               </tr>
             ) : (
-              filtered.map((product, idx) => (
-                <tr key={idx} className="border-b last:border-none">
+              filtered.map((product) => (
+                <tr key={product.id} className="border-b last:border-none">
                   <td className="py-2 px-4">
                     {product.imageUrl ? (
                       <img
@@ -75,6 +95,14 @@ export default function ProductListPage() {
                   <td className="py-2 px-4">{product.description}</td>
                   <td className="py-2 px-4">{product.price}</td>
                   <td className="py-2 px-4">{product.category}</td>
+                  <td className="py-2 px-4">
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))
             )}

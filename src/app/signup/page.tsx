@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import axios from "axios";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +13,7 @@ const signUpSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email"),
   phone: z.string().min(1, "Phone is required").regex(/^\d+$/, "Phone must be numbers only"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
+  gender: z.enum(["Male", "Female", "Other"]).refine((val) => val, { message: "Gender is required" }),
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -31,19 +32,18 @@ export default function SignUpPage() {
 
   // 3. Simulate API call and handle submit
   const onSubmit = async (data: SignUpFormData) => {
-    await new Promise((res) => setTimeout(res, 800)); // Simulate API
-    // Save user to localStorage
-    if (typeof window !== "undefined") {
-      localStorage.setItem("user", JSON.stringify(data));
-      localStorage.setItem("isLoggedIn", "false");
+    try {
+      await axios.post("http://localhost:3001/users", data);
+      toast.success("Sign up successful!");
+      setTimeout(() => router.push("/login"), 1200);
+    } catch (error) {
+      toast.error("Sign up failed!");
     }
-    toast.success("Sign up successful!");
-    setTimeout(() => router.push("/login"), 1200); // Redirect after toast
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <Toaster position="top-center" />
+      {/* <Toaster position="top-center" /> */}
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"
